@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0a">
+<title>HERMES TRADING DASHBOARD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --green: #00ff00;
+  --dark-green: #00aa00;
+  --bg: #0a0a0a;
+  --panel-bg: #001a00;
+  --border-glow: rgba(0,255,0,0.3);
+}
+body {
+  background: #0a0a0a;
+  color: var(--green);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  line-height: 1.7;
+  padding: 10px;
+  image-rendering: pixelated;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+.container { max-width: 1000px; margin: 0 auto; }
+.header {
+  text-align: center;
+  border: 3px solid var(--green);
+  padding: 10px 8px;
+  margin-bottom: 12px;
+  background: #001100;
+  box-shadow: 0 0 15px var(--border-glow), inset 0 0 15px rgba(0,255,0,0.1);
+  border-radius: 4px;
+}
+.header h1 { font-size: 11px; color: var(--green); text-shadow: 0 0 8px var(--green), 0 0 16px var(--dark-green); margin-bottom: 6px; line-height: 1.4; }
+.header .subtitle { font-size: 6px; color: var(--dark-green); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.panel {
+  border: 2px solid var(--green);
+  background: var(--panel-bg);
+  padding: 10px;
+  box-shadow: 0 0 8px var(--border-glow);
+  border-radius: 4px;
+}
+.panel h2 {
+  font-size: 9px;
+  color: #ffcc00;
+  border-bottom: 2px solid #ffcc00;
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+  text-shadow: 0 0 4px #ffcc00;
+}
+.stat { display: flex; justify-content: space-between; margin: 3px 0; flex-wrap: wrap; gap: 2px; }
+.stat .label { color: var(--dark-green); }
+.stat .value { color: var(--green); text-align: right; }
+.value.gold { color: #ffcc00; }
+.value.red { color: #ff4444; }
+.value.green { color: var(--green); }
+
+.agent-card {
+  border: 2px solid var(--dark-green);
+  background: #001500;
+  padding: 6px;
+  margin: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 2px;
+}
+.agent-icon { font-size: 16px; min-width: 20px; text-align: center; }
+.agent-info { flex: 1; min-width: 0; }
+.agent-name { color: #ffcc00; font-size: 7px; }
+.agent-status { font-size: 6px; }
+.agent-status.active { color: var(--green); }
+.agent-status.ready { color: #ffcc00; }
+
+.trade-row {
+  display: flex; justify-content: space-between;
+  padding: 2px 0; border-bottom: 1px dashed #002200;
+  font-size: 6px; flex-wrap: wrap; gap: 3px;
+}
+.trade-buy { color: var(--green); }
+.trade-sell { color: #ff4444; }
+
+/* Blink animation */
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+.blink { animation: blink 1.2s infinite; }
+
+/* CRT scanlines */
+@keyframes scanline { 0% { background-position: 0 0; } 100% { background-position: 0 30px; } }
+.scanlines::after {
+  content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(0deg, rgba(0,255,0,0.02) 0px, transparent 2px);
+  pointer-events: none; z-index: 999;
+}
+
+.footer { text-align: center; margin-top: 10px; color: #002200; font-size: 6px; }
+
+/* MOBILE TWEAKS */
+@media (max-width: 600px) {
+  body { padding: 6px; font-size: 7px; }
+  .header { padding: 8px 6px; margin-bottom: 8px; }
+  .header h1 { font-size: 9px; word-break: break-all; }
+  .grid { grid-template-columns: 1fr; gap: 6px; }
+  .panel { padding: 8px; }
+  .panel h2 { font-size: 8px; }
+  .agent-icon { font-size: 14px; min-width: 16px; }
+  .stat .label, .stat .value { font-size: 6px; word-break: break-all; }
+}
+
+/* Pull-to-refresh indicator */
+.pull-hint {
+  text-align: center;
+  color: #003300;
+  font-size: 5px;
+  padding: 4px;
+}
+</style>
+</head>
+<body class="scanlines">
+<div class="container">
+
+<div class="header">
+  <h1>HERMES AUTO-TRADER v1.0</h1>
+  <div class="subtitle blink" id="statusLine">⬇ READY ⬇</div>
+</div>
+
+<div class="grid">
+
+<div class="panel">
+  <h2>SYSTEM STATUS</h2>
+  <div class="stat"><span class="label">Balance:</span><span class="value gold" id="balance">0.1354 SOL</span></div>
+  <div class="stat"><span class="label">Positions:</span><span class="value" id="positions">0</span></div>
+  <div class="stat"><span class="label">Total Trades:</span><span class="value" id="totalTrades">0</span></div>
+  <div class="stat"><span class="label">P&amp;L:</span><span class="value green" id="pnl">+0.000000 SOL</span></div>
+  <div class="stat"><span class="label">Updated:</span><span class="value" id="updated">--</span></div>
+</div>
+
+<div class="panel">
+  <h2>AGENTS</h2>
+  <div class="agent-card">
+    <div class="agent-icon">🔍</div>
+    <div class="agent-info">
+      <div class="agent-name">SCANNER</div>
+      <div class="agent-status active">🟢 ACTIVE</div>
+      <div style="font-size:5px;color:#005500;">Scans pump.fun (5s intervals)</div>
+    </div>
+  </div>
+  <div class="agent-card">
+    <div class="agent-icon">🧠</div>
+    <div class="agent-info">
+      <div class="agent-name">ANALYST</div>
+      <div class="agent-status ready">🟡 READY</div>
+      <div style="font-size:5px;color:#005500;">AI scam detection + scoring</div>
+    </div>
+  </div>
+  <div class="agent-card">
+    <div class="agent-icon">⚔️</div>
+    <div class="agent-info">
+      <div class="agent-name">EXECUTOR</div>
+      <div class="agent-status ready">🟡 READY</div>
+      <div style="font-size:5px;color:#005500;">Jupiter swaps (real TX)</div>
+    </div>
+  </div>
+  <div class="agent-card">
+    <div class="agent-icon">📊</div>
+    <div class="agent-info">
+      <div class="agent-name">MONITOR</div>
+      <div class="agent-status active">🟢 ACTIVE</div>
+      <div style="font-size:5px;color:#005500;">TP/SL management</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>ACTIVE POSITIONS</h2>
+  <div style="color:#005500;text-align:center;padding:8px;font-size:7px;">No active positions</div>
+</div>
+
+<div class="panel">
+  <h2>RECENT TRADES</h2>
+  <div style="color:#005500;text-align:center;padding:8px;font-size:7px;">No trades yet</div>
+</div>
+
+</div>
+
+<div class="panel" style="margin-top:10px;text-align:center;">
+  <h2 style="display:inline;">HIGH SCORES</h2>
+  <div style="margin-top:8px;font-size:7px;">
+    <span style="color:#ffcc00;">Best: -- </span> &nbsp;
+    <span style="color:#ff4444;">Worst: -- </span> &nbsp;
+    <span style="color:var(--green);">Win Rate: --%</span>
+  </div>
+</div>
+
+<div class="footer" id="footer">
+  HERMES AUTO-TRADER v1.0 | <span id="timestamp"></span> | ALL SYSTEMS NOMINAL
+</div>
+<div class="pull-hint">↻ Pull down to refresh | Auto-refresh: 30s</div>
+
+</div>
+<script>
+function updateTime() {
+  const now = new Date();
+  document.getElementById('timestamp').textContent = now.toISOString().replace('T',' ').slice(0,19);
+  document.getElementById('updated').textContent = now.toTimeString().slice(0,8);
+}
+updateTime();
+setInterval(updateTime, 1000);
+
+// Auto-refresh every 30 seconds
+setTimeout(function(){ location.reload(); }, 30000);
+</script>
+</body>
+</html>
