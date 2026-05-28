@@ -2,91 +2,173 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#000000">
-<title>🎮 HERMES 3D TRADING TERMINAL</title>
+<meta name="theme-color" content="#0a0805">
+<title>⛏️ HERMES MINING COLONY — Solana Meme Mine</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;overflow:hidden;font-family:'Courier New',monospace;touch-action:none}
-canvas{display:block}
+body{background:#0a0805;overflow:hidden;font-family:'VT323',monospace;touch-action:pan-x pan-y pinch-zoom;user-select:none}
+canvas{display:block;position:fixed;top:0;left:0}
 #hud{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:10}
 .hud-panel{
-  position:absolute;
-  background:rgba(0,10,0,0.85);
-  border:1px solid rgba(0,255,0,0.4);
-  border-radius:4px;
-  padding:10px 14px;
-  color:#0f0;
-  font-size:11px;
-  backdrop-filter:blur(4px);
-  box-shadow:0 0 20px rgba(0,255,0,0.15),inset 0 0 20px rgba(0,255,0,0.05);
-  pointer-events:auto;
+  position:absolute;background:rgba(8,5,2,0.88);
+  border:2px solid rgba(255,180,50,0.3);
+  border-image:linear-gradient(135deg,rgba(255,180,50,0.6),rgba(180,100,20,0.2)) 1;
+  border-radius:3px;padding:8px 10px;color:#e8c878;
+  font-family:'VT323',monospace;font-size:15px;letter-spacing:1px;
+  backdrop-filter:blur(3px);
+  box-shadow:0 0 15px rgba(255,150,30,0.08),inset 0 0 15px rgba(255,150,30,0.03);
+  pointer-events:auto;transition:all 0.3s;
+  max-height:100vh;overflow-y:auto;
 }
-.hud-panel .title{color:#ff0;font-size:10px;font-weight:bold;margin-bottom:6px;letter-spacing:2px;text-shadow:0 0 10px rgba(255,255,0,0.5)}
-.hud-panel .val{color:#0f0;font-size:16px;font-weight:bold;text-shadow:0 0 8px rgba(0,255,0,0.6)}
-.hud-panel .val.gold{color:#ff0;font-size:20px}
-.hud-panel .row{display:flex;justify-content:space-between;margin:2px 0;gap:12px}
-.hud-panel .label{color:rgba(0,255,0,0.6);font-size:8px}
-.hud-panel .data{color:#0f0;font-size:10px;text-align:right}
-#balance-panel{top:15px;left:15px}
-#status-panel{top:15px;right:15px;text-align:right}
-#agents-panel{bottom:15px;left:15px;min-width:180px}
-#positions-panel{bottom:15px;right:15px}
-#center-title{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
-#center-title .main{font-size:14px;color:#0f0;text-shadow:0 0 20px #0f0,0 0 40px #0a0;letter-spacing:4px}
-#center-title .sub{font-size:8px;color:rgba(0,255,0,0.5);margin-top:4px}
-.agent-dot{display:flex;align-items:center;gap:6px;margin:3px 0;font-size:8px}
-.agent-dot .dot{width:6px;height:6px;border-radius:50%}
-.agent-dot .dot.on{background:#0f0;box-shadow:0 0 6px #0f0}
-.agent-dot .dot.standby{background:#ff0;box-shadow:0 0 6px #ff0}
-.blink{animation:blink 1.2s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.hud-panel .title{
+  color:#ffb432;font-size:13px;font-weight:bold;margin-bottom:5px;
+  letter-spacing:2px;text-shadow:0 0 8px rgba(255,180,50,0.4);
+  border-bottom:1px solid rgba(255,180,50,0.25);padding-bottom:4px;
+  display:flex;align-items:center;gap:6px
+}
+.hud-panel .title .icon{font-size:16px}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0;gap:8px}
+.stat-row .lbl{color:rgba(232,200,120,0.7);font-size:13px}
+.stat-row .val{color:#ffb432;font-size:15px;font-weight:bold;text-align:right}
+.stat-row .val.big{font-size:22px;color:#ffd700;text-shadow:0 0 10px rgba(255,215,0,0.5)}
+.stat-row .val.green{color:#7ec850}
+.stat-row .val.red{color:#e85545}
 
-#loading{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#0f0;font-size:12px;z-index:100;letter-spacing:3px}
-#loading.hidden{display:none}
+.agent-card{
+  background:rgba(20,12,5,0.9);border:1px solid rgba(255,180,50,0.2);
+  border-radius:4px;padding:6px 8px;margin:3px 0;
+  display:flex;align-items:center;gap:8px;cursor:pointer;
+  transition:all 0.2s;position:relative;overflow:hidden
+}
+.agent-card:hover{background:rgba(30,18,8,0.95);border-color:rgba(255,180,50,0.5)}
+.agent-card .avatar{font-size:24px;min-width:28px;text-align:center;filter:drop-shadow(0 0 4px rgba(255,180,50,0.6))}
+.agent-card .info{flex:1;min-width:0}
+.agent-card .name{color:#ffd700;font-size:13px;font-weight:bold}
+.agent-card .class{color:rgba(255,180,50,0.6);font-size:10px;text-transform:uppercase;letter-spacing:2px}
+.agent-card .status-bar{height:4px;background:rgba(0,0,0,0.5);border-radius:2px;margin-top:3px;overflow:hidden}
+.agent-card .status-fill{height:100%;border-radius:2px;transition:width 0.5s}
+.agent-card .status-fill.active{background:linear-gradient(90deg,#3a8,#5c8)}
+.agent-card .status-fill.working{background:linear-gradient(90deg,#da3,#fb3);animation:pulse 1.5s infinite}
+.agent-card .status-fill.idle{background:linear-gradient(90deg,#555,#777)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+
+#balancePanel{top:10px;left:10px;min-width:160px}
+#agentsPanel{top:10px;right:10px;min-width:190px}
+#logPanel{bottom:10px;left:10px;right:10px;max-height:130px}
+#positionsPanel{top:180px;left:10px;min-width:160px}
+#detailPanel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(5,3,0,0.95);border:2px solid #ffb432;border-radius:8px;
+  padding:16px;z-index:100;display:none;pointer-events:auto;min-width:280px;
+  text-align:center;color:#e8c878;font-family:'VT323',monospace}
+#detailPanel .close{position:absolute;top:5px;right:10px;font-size:20px;cursor:pointer;color:#e85545}
+#detailPanel h2{color:#ffd700;font-size:20px;margin-bottom:4px}
+#detailPanel .role{color:#ffb432;font-size:13px;margin-bottom:8px}
+#detailPanel .stat{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,180,50,0.15);font-size:14px}
+
+.log-entry{font-size:11px;padding:1px 0;border-bottom:1px solid rgba(255,180,50,0.08);display:flex;gap:8px}
+.log-entry .time{color:rgba(200,160,80,0.5);min-width:50px}
+.log-entry .msg{color:#c8a060}
+.log-entry .msg.warn{color:#e8a040}
+.log-entry .msg.good{color:#7ec850}
+
+.ore-tag{display:inline-block;padding:1px 4px;border-radius:2px;font-size:10px;margin:1px}
+.ore-tag.gold{background:rgba(255,215,0,0.2);color:#ffd700;border:1px solid rgba(255,215,0,0.3)}
+.ore-tag.silver{background:rgba(192,192,192,0.2);color:#c0c0c0;border:1px solid rgba(192,192,192,0.3)}
+.ore-tag.coal{background:rgba(80,80,80,0.3);color:#888;border:1px solid rgba(100,100,100,0.3)}
 
 @media(max-width:600px){
-  .hud-panel{padding:6px 10px;font-size:9px}
-  .hud-panel .val{font-size:13px}
-  .hud-panel .val.gold{font-size:16px}
-  #center-title .main{font-size:10px}
+  .hud-panel{padding:5px 7px;font-size:12px}
+  .hud-panel .title{font-size:11px}
+  .stat-row .lbl{font-size:11px}
+  .stat-row .val{font-size:13px}
+  .stat-row .val.big{font-size:18px}
+  .agent-card .name{font-size:11px}
+  .agent-card .class{font-size:8px}
 }
+
+#toggleBtn{position:fixed;bottom:10px;right:10px;z-index:20;pointer-events:auto;
+  background:rgba(8,5,2,0.9);border:1px solid rgba(255,180,50,0.4);color:#ffb432;
+  padding:6px 12px;border-radius:4px;font-family:'VT323',monospace;font-size:14px;
+  cursor:pointer;letter-spacing:1px}
+#toggleBtn:hover{background:rgba(20,12,5,0.95)}
 </style>
 </head>
 <body>
-<div id="loading">INITIALIZING...</div>
 
 <div id="hud">
-  <div class="hud-panel" id="balance-panel">
-    <div class="title">💰 BALANCE</div>
-    <div class="val gold" id="bal">0.1354 SOL</div>
-    <div class="row"><span class="label">USD</span><span class="data">~$10.93</span></div>
-    <div class="row"><span class="label">POSITIONS</span><span class="data">0</span></div>
+  <div class="hud-panel" id="balancePanel">
+    <div class="title"><span class="icon">💰</span> MINE CART</div>
+    <div class="stat-row"><span class="lbl">SOL Balance</span><span class="val big" id="balSOL">0.1354</span></div>
+    <div class="stat-row"><span class="lbl">USD Value</span><span class="val">~$10.93</span></div>
+    <div class="stat-row"><span class="lbl">Ore Mined</span><span class="val green">+0.00 SOL</span></div>
+    <div class="stat-row"><span class="lbl">Depth Level</span><span class="val">Lv.1 — Surface</span></div>
   </div>
 
-  <div class="hud-panel" id="status-panel">
-    <div class="title">📊 MARKET</div>
-    <div class="row"><span class="label">SOL/USD</span><span class="data" id="solPrice">$80.72</span></div>
-    <div class="row"><span class="label">24H</span><span class="data" style="color:#f44" id="sol24h">-3.5%</span></div>
-    <div class="row"><span class="label">P&L</span><span class="data" style="color:#0f0">+0.00 SOL</span></div>
-    <div class="row"><span class="label">TRADES</span><span class="data">0</span></div>
+  <div class="hud-panel" id="agentsPanel">
+    <div class="title"><span class="icon">👷</span> MINING CREW</div>
+    <div class="agent-card" onclick="showDetail('prospector')" id="card-prospector">
+      <div class="avatar">🕵️</div>
+      <div class="info">
+        <div class="name">PROSPECTOR</div>
+        <div class="class">Scanner — Ore Detection</div>
+        <div class="status-bar"><div class="status-fill active" style="width:95%"></div></div>
+      </div>
+    </div>
+    <div class="agent-card" onclick="showDetail('geologist')" id="card-geologist">
+      <div class="avatar">🧠</div>
+      <div class="info">
+        <div class="name">GEOLOGIST</div>
+        <div class="class">Analyst — Quality Check</div>
+        <div class="status-bar"><div class="status-fill working" style="width:78%"></div></div>
+      </div>
+    </div>
+    <div class="agent-card" onclick="showDetail('miner')" id="card-miner">
+      <div class="avatar">⚔️</div>
+      <div class="info">
+        <div class="name">EXCAVATOR</div>
+        <div class="class">Executor — Real Mining TX</div>
+        <div class="status-bar"><div class="status-fill idle" style="width:45%"></div></div>
+      </div>
+    </div>
+    <div class="agent-card" onclick="showDetail('foreman')" id="card-foreman">
+      <div class="avatar">📊</div>
+      <div class="info">
+        <div class="name">FOREMAN</div>
+        <div class="class">Monitor — TP/SL Control</div>
+        <div class="status-bar"><div class="status-fill active" style="width:90%"></div></div>
+      </div>
+    </div>
   </div>
 
-  <div class="hud-panel" id="agents-panel">
-    <div class="title">🤖 AGENTS</div>
-    <div class="agent-dot"><span class="dot on"></span> SCANNER <span style="color:#0f0;margin-left:auto">ACTIVE</span></div>
-    <div class="agent-dot"><span class="dot standby"></span> ANALYST <span style="color:#ff0;margin-left:auto">READY</span></div>
-    <div class="agent-dot"><span class="dot standby"></span> EXECUTOR <span style="color:#ff0;margin-left:auto">READY</span></div>
-    <div class="agent-dot"><span class="dot on"></span> MONITOR <span style="color:#0f0;margin-left:auto">ACTIVE</span></div>
+  <div class="hud-panel" id="positionsPanel">
+    <div class="title"><span class="icon">💎</span> ORE DEPOSITS</div>
+    <div style="color:rgba(200,150,80,0.5);text-align:center;padding:8px;font-size:13px">
+      No active deposits<br><span style="font-size:11px">Miner awaiting orders...</span>
+    </div>
   </div>
 
-  <div class="hud-panel" id="positions-panel">
-    <div class="title">📈 POSITIONS</div>
-    <div style="color:rgba(0,255,0,0.3);font-size:9px;text-align:center">NO ACTIVE<br>POSITIONS</div>
+  <div class="hud-panel" id="logPanel">
+    <div class="title"><span class="icon">📜</span> MINING LOG</div>
+    <div class="log-entry"><span class="time">02:23</span><span class="msg good">🟢 FOREMAN: System online — all stations nominal</span></div>
+    <div class="log-entry"><span class="time">02:23</span><span class="msg">🕵️ PROSPECTOR: Scanning Layer 1 (pump.fun) for new veins...</span></div>
+    <div class="log-entry"><span class="time">02:24</span><span class="msg">🧠 GEOLOGIST: Quality analysis engine ready</span></div>
+    <div class="log-entry"><span class="time">02:24</span><span class="msg warn">⚔️ EXCAVATOR: Standing by — waiting for viable ore (SOL &gt; 0.03 needed)</span></div>
+    <div class="log-entry"><span class="time">02:25</span><span class="msg">📊 MONITOR: TP=150% | SL=-15% | Max positions=2</span></div>
   </div>
 </div>
+
+<div id="detailPanel">
+  <div class="close" onclick="hideDetail()">✕</div>
+  <h2 id="detailName"></h2>
+  <div class="role" id="detailRole"></div>
+  <div id="detailStats"></div>
+</div>
+
+<button id="toggleBtn" onclick="toggleHUD()">👁 HUD</button>
 
 <script type="importmap">
 {"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}
@@ -95,240 +177,446 @@ canvas{display:block}
 <script type="module">
 import * as THREE from 'three';
 
-// Hide loading
-setTimeout(()=>document.getElementById('loading').classList.add('hidden'),800);
-
-// SCENE
-const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x000000,0.00008);
-
-const camera = new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,100);
-camera.position.set(0,2.5,8);
+// ═══════════════════ SCENE SETUP ═══════════════════
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0x0a0805,0.0003);
+const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,0.5,40);
+camera.position.set(0,5,12);
 camera.lookAt(0,0,0);
-
-const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true});
-renderer.setSize(window.innerWidth,window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.2;
-document.body.appendChild(renderer.domElement);
+renderer.toneMappingExposure=1.0;
+document.body.insertBefore(renderer.domElement,document.getElementById('hud'));
 
-// LIGHTS
-const ambient = new THREE.AmbientLight(0x002200,1.5);
-scene.add(ambient);
-const dirLight = new THREE.DirectionalLight(0x00ff00,3);
-dirLight.position.set(5,10,5);
-dirLight.castShadow=true;
-scene.add(dirLight);
-const pointLight = new THREE.PointLight(0x00ff00,20,15);
-pointLight.position.set(0,2,0);
-scene.add(pointLight);
+// ═══════════════════ LIGHTING ═══════════════════
+const amb=new THREE.AmbientLight(0x1a1208,0.8);
+scene.add(amb);
+const sun=new THREE.DirectionalLight(0xffcc88,2);
+sun.position.set(8,12,4);
+sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024);
+sun.shadow.camera.near=0.5;sun.shadow.camera.far=50;
+sun.shadow.camera.left=-15;sun.shadow.camera.right=15;
+sun.shadow.camera.top=15;sun.shadow.camera.bottom=-15;
+sun.shadow.bias=-0.0005;
+scene.add(sun);
+// Lantern lights
+const lanterns=[];
+for(let i=0;i<5;i++){
+  const l=new THREE.PointLight(0xff9930,8,6);
+  l.position.set((i-2)*3,1.5+Math.random()*2,(Math.random()-0.5)*8);
+  lanterns.push(l);scene.add(l);
+}
 
-// GRID FLOOR
-const gridHelper = new THREE.PolarGridHelper(8,32,24,128,0x003300,0x001100);
-scene.add(gridHelper);
+// ═══════════════════ TERRAIN - MINE ENVIRONMENT ═══════════════════
+// Ground - rocky dirt
+const groundGeo=new THREE.PlaneGeometry(20,20);
+const groundMat=new THREE.MeshStandardMaterial({color:0x2a1f10,roughness:1,metalness:0});
+const ground=new THREE.Mesh(groundGeo,groundMat);
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
 
-// NEON GRID LINES
-const floorGeo = new THREE.PlaneGeometry(16,16);
-const floorMat = new THREE.ShaderMaterial({
-  uniforms:{time:{value:0}},
-  vertexShader:`
-    varying vec2 vUv;
-    void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}
-  `,
-  fragmentShader:`
-    varying vec2 vUv;
-    uniform float time;
-    void main(){
-      vec2 p=vUv*16.0;
-      float gx=smoothstep(0.02,0.0,abs(fract(p.x)-0.5))*0.3;
-      float gy=smoothstep(0.02,0.0,abs(fract(p.y)-0.5))*0.3;
-      float g=max(gx,gy);
-      float d=length(vUv-0.5)*2.0;
-      g*=1.0-d*0.7;
-      gl_FragColor=vec4(0.0,g*0.5,0.0,g*0.15);
-    }
-  `,
-  transparent:true,depthWrite:false
+// Random rocks
+const rockGeo=new THREE.IcosahedronGeometry(0.3,1);
+const rockMat=new THREE.MeshStandardMaterial({color:0x3a2a15,roughness:0.9,metalness:0.1});
+for(let i=0;i<30;i++){
+  const r=new THREE.Mesh(rockGeo,rockMat);
+  r.position.set((Math.random()-0.5)*16,0.1+Math.random()*0.2,(Math.random()-0.5)*14);
+  r.scale.setScalar(0.5+Math.random()*1.5);
+  r.rotation.set(Math.random()*6,Math.random()*6,Math.random()*6);
+  r.castShadow=true;r.receiveShadow=true;scene.add(r);
+}
+
+// Mine entrance - tunnel arch
+const archGroup=new THREE.Group();
+const archPillarGeo=new THREE.CylinderGeometry(0.2,0.3,3,8);
+const archPillarMat=new THREE.MeshStandardMaterial({color:0x3a2510,roughness:0.8});
+for(let i=-1;i<=1;i+=2){
+  const p=new THREE.Mesh(archPillarGeo,archPillarMat);
+  p.position.set(i*1.8,-1.2,-6);
+  p.castShadow=true;scene.add(p);
+}
+// Cross beam
+const beamGeo=new THREE.BoxGeometry(4,0.3,0.3);
+const beam=new THREE.Mesh(beamGeo,archPillarMat);
+beam.position.set(0,0.2,-6);
+beam.castShadow=true;scene.add(beam);
+// "MINE" sign
+const signCanvas=document.createElement('canvas');
+signCanvas.width=256;signCanvas.height=64;
+const sctx=signCanvas.getContext('2d');
+sctx.fillStyle='#3a2510';sctx.fillRect(0,0,256,64);
+sctx.fillStyle='#ffb432';sctx.font='bold 36px "Press Start 2P"';
+sctx.textAlign='center';sctx.fillText('HERMES MINE',128,44);
+const signTex=new THREE.CanvasTexture(signCanvas);
+const signGeo=new THREE.PlaneGeometry(3,0.75);
+const signMat=new THREE.MeshStandardMaterial({map:signTex,transparent:true,emissive:0xffb432,emissiveIntensity:0.3});
+const sign=new THREE.Mesh(signGeo,signMat);
+sign.position.set(0,1.5,-6);scene.add(sign);
+
+// ═══════════════════ ORE DEPOSITS (glowing gems) ═══════════════════
+const oreDeposits=[];
+for(let i=0;i<8;i++){
+  const oreGroup=new THREE.Group();
+  oreGroup.position.set((Math.random()-0.5)*12,0.6+Math.random()*1,(Math.random()-0.5)*10);
+  // Gem crystal
+  const gemGeo=new THREE.OctahedronGeometry(0.15,0);
+  const gemColors=[0xffd700,0x00ff88,0xff4488,0x44aaff,0xff8800];
+  const gemMat=new THREE.MeshStandardMaterial({
+    color:gemColors[i%5],metalness:0.3,roughness:0.1,emissive:gemColors[i%5],emissiveIntensity:0.8
+  });
+  const gem=new THREE.Mesh(gemGeo,gemMat);
+  gem.position.y=0.3;gem.castShadow=true;
+  oreGroup.add(gem);
+  // Glow sphere
+  const glowGeo=new THREE.SphereGeometry(0.25,8,8);
+  const glowMat=new THREE.MeshBasicMaterial({color:gemColors[i%5],transparent:true,opacity:0.2,blending:THREE.AdditiveBlending});
+  const glow=new THREE.Mesh(glowGeo,glowMat);
+  oreGroup.add(glow);
+  oreGroup.userData={gem:gem,glow:glow,baseY:oreGroup.position.y,color:gemColors[i%5]};
+  oreDeposits.push(oreGroup);scene.add(oreGroup);
+}
+
+// ═══════════════════ MINE CART TRACK ═══════════════════
+const trackGroup=new THREE.Group();
+const railGeo=new THREE.BoxGeometry(0.08,0.05,12);
+const railMat=new THREE.MeshStandardMaterial({color:0x664422,metalness:0.7,roughness:0.4});
+for(let i=-1;i<=1;i+=2){
+  const rail=new THREE.Mesh(railGeo,railMat);
+  rail.position.set(i*0.5,0.05,0);rail.castShadow=true;
+  trackGroup.add(rail);
+}
+// Cross ties
+const tieGeo=new THREE.BoxGeometry(1.2,0.03,0.15);
+const tieMat=new THREE.MeshStandardMaterial({color:0x3a2010,roughness:0.9});
+for(let z=-5;z<=5;z+=0.8){
+  const tie=new THREE.Mesh(tieGeo,tieMat);
+  tie.position.set(0,0.02,z);trackGroup.add(tie);
+}
+scene.add(trackGroup);
+
+// ═══════════════════ BUILD AGENT CHARACTERS ═══════════════════
+function createCharacter(icon,color,position){
+  const group=new THREE.Group();
+  group.position.copy(position);
+
+  // Body
+  const bodyGeo=new THREE.CylinderGeometry(0.2,0.25,0.8,6);
+  const bodyMat=new THREE.MeshStandardMaterial({color:color,roughness:0.5,metalness:0.2});
+  const body=new THREE.Mesh(bodyGeo,bodyMat);
+  body.position.y=0.4;body.castShadow=true;group.add(body);
+
+  // Head
+  const headGeo=new THREE.IcosahedronGeometry(0.22,0);
+  const headMat=new THREE.MeshStandardMaterial({color:0xffcc99,roughness:0.6});
+  const head=new THREE.Mesh(headGeo,headMat);
+  head.position.y=0.95;head.castShadow=true;group.add(head);
+
+  // Hard hat
+  const hatGeo=new THREE.CylinderGeometry(0.25,0.28,0.15,8);
+  const hatMat=new THREE.MeshStandardMaterial({color:0xff8800,roughness:0.4,metalness:0.1});
+  const hat=new THREE.Mesh(hatGeo,hatMat);
+  hat.position.y=1.1;hat.castShadow=true;group.add(hat);
+  const hatBrimGeo=new THREE.CylinderGeometry(0.3,0.3,0.05,8);
+  const hatBrim=new THREE.Mesh(hatBrimGeo,hatMat);
+  hatBrim.position.y=1.02;group.add(hatBrim);
+
+  // Tool (varies by agent)
+  const toolGroup=new THREE.Group();
+  toolGroup.position.set(0.3,0.5,0);
+  group.add(toolGroup);
+
+  // Headlamp
+  const lampGeo=new THREE.SphereGeometry(0.06,8,8);
+  const lampMat=new THREE.MeshStandardMaterial({color:0xffff00,emissive:0xffff00,emissiveIntensity:2});
+  const lamp=new THREE.Mesh(lampGeo,lampMat);
+  lamp.position.set(0,1.05,0.2);group.add(lamp);
+  const lampGlow=new THREE.PointLight(0xffff88,3,2);
+  lampGlow.position.copy(lamp.position);group.add(lampGlow);
+
+  group.userData={toolGroup,body,head,hat,lampGlow,baseY:position.y,animOffset:Math.random()*100};
+  return group;
+}
+
+// Agent positions on map
+const agents=[
+  {id:'prospector',icon:'🕵️',color:0x4488cc,pos:new THREE.Vector3(-3,0,3),tool:'pickaxe'},
+  {id:'geologist',icon:'🧠',color:0x44aa44,pos:new THREE.Vector3(3,0,2),tool:'magnifier'},
+  {id:'miner',icon:'⚔️',color:0xcc4444,pos:new THREE.Vector3(-2,0,-2),tool:'heavypick'},
+  {id:'foreman',icon:'📊',color:0xccaa44,pos:new THREE.Vector3(2,0,-3),tool:'clipboard'},
+];
+
+const agentChars=[];
+agents.forEach(a=>{
+  const char=createCharacter(a.icon,a.color,a.pos);
+  char.userData.agentId=a.id;
+  char.userData.toolType=a.tool;
+  scene.add(char);
+  agentChars.push(char);
 });
-const floor = new THREE.Mesh(floorGeo,floorMat);
-floor.rotation.x=-Math.PI/2;
-floor.position.y=-2.5;
-scene.add(floor);
 
-// 3D SOLANA COIN
-const coinGroup = new THREE.Group();
-scene.add(coinGroup);
+// Add tools to characters
+agentChars.forEach(char=>{
+  const g=char.userData.toolGroup;
+  const tool=char.userData.toolType;
 
-// Coin body
-const coinGeo = new THREE.CylinderGeometry(1,1,0.15,64);
-const coinMat = new THREE.MeshStandardMaterial({
-  color:0x9945FF,
-  metalness:0.9,
-  roughness:0.15,
-  emissive:0x220044,
-  emissiveIntensity:0.4
+  if(tool==='pickaxe'){
+    const handleGeo=new THREE.CylinderGeometry(0.03,0.03,0.8,6);
+    handleGeo.rotateZ(Math.PI/4);
+    const handle=new THREE.Mesh(handleGeo,new THREE.MeshStandardMaterial({color:0x8B4513}));
+    g.add(handle);
+    const headGeo=new THREE.BoxGeometry(0.25,0.06,0.06);
+    const head=new THREE.Mesh(headGeo,new THREE.MeshStandardMaterial({color:0x888888,metalness:0.9,roughness:0.2}));
+    head.position.set(0.2,0.3,0);g.add(head);
+  }else if(tool==='magnifier'){
+    const handleGeo=new THREE.CylinderGeometry(0.03,0.05,0.5,8);
+    const handle=new THREE.Mesh(handleGeo,new THREE.MeshStandardMaterial({color:0x8B4513}));
+    handle.position.set(0.15,0,0);g.add(handle);
+    const lensGeo=new THREE.TorusGeometry(0.15,0.03,8,16);
+    const lens=new THREE.Mesh(lensGeo,new THREE.MeshStandardMaterial({color:0x88ccff,metalness:0.5,roughness:0.1,emissive:0x4488cc,emissiveIntensity:0.5}));
+    lens.position.set(0.3,0,0);g.add(lens);
+  }else if(tool==='heavypick'){
+    const handleGeo=new THREE.CylinderGeometry(0.04,0.04,1,6);
+    handleGeo.rotateZ(Math.PI/3);
+    const handle=new THREE.Mesh(handleGeo,new THREE.MeshStandardMaterial({color:0x654321}));
+    handle.position.set(0.1,-0.1,0);g.add(handle);
+    const hGeo1=new THREE.ConeGeometry(0.15,0.3,4);
+    const h1=new THREE.Mesh(hGeo1,new THREE.MeshStandardMaterial({color:0x999999,metalness:0.9,roughness:0.15}));
+    h1.position.set(0.4,0.35,0);g.add(h1);
+    const h2=new THREE.ConeGeometry(0.1,0.25,4);
+    h2.rotation.z=Math.PI;
+    const h22=new THREE.Mesh(h2,new THREE.MeshStandardMaterial({color:0x999999,metalness:0.9,roughness:0.15}));
+    h22.position.set(-0.1,0.15,0);g.add(h22);
+  }else{ // clipboard
+    const boardGeo=new THREE.BoxGeometry(0.2,0.3,0.03);
+    const board=new THREE.Mesh(boardGeo,new THREE.MeshStandardMaterial({color:0xd4a574}));
+    board.position.set(0.15,0.1,0);g.add(board);
+    const paperGeo=new THREE.PlaneGeometry(0.15,0.25);
+    const paper=new THREE.Mesh(paperGeo,new THREE.MeshStandardMaterial({color:0xffffff}));
+    paper.position.set(0.15,0.1,0.02);g.add(paper);
+  }
 });
-const coin = new THREE.Mesh(coinGeo,coinMat);
-coin.castShadow=true;
-coinGroup.add(coin);
 
-// Coin edge ring
-const ringGeo = new THREE.TorusGeometry(1,0.04,16,64);
-const ringMat = new THREE.MeshStandardMaterial({color:0x14F195,metalness:1,roughness:0.1,emissive:0x14F195,emissiveIntensity:1.5});
-const ring = new THREE.Mesh(ringGeo,ringMat);
-coinGroup.add(ring);
-
-// SOL text plane
-const solTexCanvas = document.createElement('canvas');
-solTexCanvas.width=256;solTexCanvas.height=256;
-const ctx=solTexCanvas.getContext('2d');
-ctx.fillStyle='#14F195';
-ctx.font='bold 100px "Press Start 2P", monospace';
-ctx.textAlign='center';
-ctx.fillText('SOL',128,140);
-const solTex=new THREE.CanvasTexture(solTexCanvas);
-const solPlaneGeo=new THREE.PlaneGeometry(1.6,1.6);
-const solPlaneMat=new THREE.MeshStandardMaterial({map:solTex,transparent:true,emissive:0x14F195,emissiveIntensity:0.8,metalness:0.5,roughness:0.3});
-const solPlane=new THREE.Mesh(solPlaneGeo,solPlaneMat);
-solPlane.position.y=0.08;
-coinGroup.add(solPlane);
-const solPlane2=solPlane.clone();
-solPlane2.position.y=-0.08;
-solPlane2.rotation.y=Math.PI;
-coinGroup.add(solPlane2);
-
-// ORBITING PARTICLES around coin
-const orbitParticles=[];
-for(let i=0;i<24;i++){
-  const pGeo=new THREE.SphereGeometry(0.03,8,8);
-  const pMat=new THREE.MeshStandardMaterial({color:0x14F195,emissive:0x14F195,emissiveIntensity:2});
-  const p=new THREE.Mesh(pGeo,pMat);
-  p.userData={angle:(i/24)*Math.PI*2,radius:1.3+Math.random()*0.5,speed:0.5+Math.random()*1.5,yOffset:Math.random()*0.3};
-  coinGroup.add(p);
-  orbitParticles.push(p);
+// ═══════════════════ PARTICLE SYSTEMS ═══════════════════
+// Floating ore dust
+const dustGeo=new THREE.BufferGeometry();
+const dustCount=300;
+const dustPositions=new Float32Array(dustCount*3);
+const dustColors=new Float32Array(dustCount*3);
+for(let i=0;i<dustCount;i++){
+  dustPositions[i*3]=(Math.random()-0.5)*16;
+  dustPositions[i*3+1]=Math.random()*5;
+  dustPositions[i*3+2]=(Math.random()-0.5)*14;
+  const c=new THREE.Color().setHSL(0.12+Math.random()*0.1,0.8,0.3+Math.random()*0.5);
+  dustColors[i*3]=c.r;dustColors[i*3+1]=c.g;dustColors[i*3+2]=c.b;
 }
+dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPositions,3));
+dustGeo.setAttribute('color',new THREE.BufferAttribute(dustColors,3));
+const dustMat=new THREE.PointsMaterial({size:0.06,vertexColors:true,transparent:true,opacity:0.5,blending:THREE.AdditiveBlending,depthWrite:false});
+const dust=new THREE.Points(dustGeo,dustMat);scene.add(dust);
 
-// BACKGROUND PARTICLES
-const bgParticlesGeo=new THREE.BufferGeometry();
-const bgCount=600;
-const bgPositions=new Float32Array(bgCount*3);
-for(let i=0;i<bgCount;i++){
-  bgPositions[i*3]=(Math.random()-0.5)*16;
-  bgPositions[i*3+1]=(Math.random()-0.5)*10;
-  bgPositions[i*3+2]=(Math.random()-0.5)*12;
-}
-bgParticlesGeo.setAttribute('position',new THREE.BufferAttribute(bgPositions,3));
-const bgParticlesMat=new THREE.PointsMaterial({color:0x00ff00,size:0.03,transparent:true,opacity:0.6,blending:THREE.AdditiveBlending});
-const bgParticles=new THREE.Points(bgParticlesGeo,bgParticlesMat);
-scene.add(bgParticles);
+// ═══════════════════ MINE CART MODEL ═══════════════════
+const cartGroup=new THREE.Group();
+const cartBodyGeo=new THREE.BoxGeometry(1,0.4,0.7);
+const cartBodyMat=new THREE.MeshStandardMaterial({color:0x8B4513,metalness:0.6,roughness:0.5});
+const cartBody=new THREE.Mesh(cartBodyGeo,cartBodyMat);
+cartBody.position.y=0.2;cartBody.castShadow=true;cartGroup.add(cartBody);
+// Wheels
+for(let x=-1;x<=1;x+=2){for(let z=-1;z<=1;z+=2){
+  const wGeo=new THREE.CylinderGeometry(0.12,0.12,0.08,8);
+  wGeo.rotateZ(Math.PI/2);
+  const w=new THREE.Mesh(wGeo,new THREE.MeshStandardMaterial({color:0x444444,metalness:0.9,roughness:0.2}));
+  w.position.set(x*0.4,0.1,z*0.35);w.castShadow=true;cartGroup.add(w);
+}}
+cartGroup.position.set(0,0.1,0);
+scene.add(cartGroup);
 
-// LASER RINGS
-const rings=[];
-for(let i=0;i<3;i++){
-  const rGeo=new THREE.TorusGeometry(2+i*1.2,0.01,8,100);
-  const rMat=new THREE.MeshBasicMaterial({color:0x00ff00,transparent:true,opacity:0.3-i*0.08});
-  const r=new THREE.Mesh(rGeo,rMat);
-  r.rotation.x=Math.PI/2;
-  r.position.y=-2+i*0.2;
-  rings.push(r);
-  scene.add(r);
-}
+// ═══════════════════ CAMERA CONTROLS ═══════════════════
+let mouseX=0,mouseY=0,targetMX=0,targetMY=0;
+let zoom=12,targetZoom=12;
+let isDragging=false,lastX=0,lastY=0,camAngle=0;
 
-// HOLOGRAM BEAMS (vertical light columns)
-for(let i=0;i<4;i++){
-  const beamGeo=new THREE.CylinderGeometry(0.02,0.02,5,8);
-  const beamMat=new THREE.MeshBasicMaterial({color:0x00ff00,transparent:true,opacity:0.15,blending:THREE.AdditiveBlending});
-  const beam=new THREE.Mesh(beamGeo,beamMat);
-  beam.position.set((Math.random()-0.5)*6,-0.5,(Math.random()-0.5)*6);
-  scene.add(beam);
-}
-
-// MOUSE/TOUCH
-let mouseX=0,mouseY=0,targetMouseX=0,targetMouseY=0;
 window.addEventListener('mousemove',e=>{
-  targetMouseX=(e.clientX/window.innerWidth)*2-1;
-  targetMouseY=-(e.clientY/window.innerHeight)*2+1;
+  if(isDragging){
+    camAngle-=(e.clientX-lastX)*0.005;
+    targetMY-=(e.clientY-lastY)*0.03;
+    lastX=e.clientX;lastY=e.clientY;
+  }
+  targetMX=(e.clientX/innerWidth)*2-1;
+  targetMY=-(e.clientY/innerHeight)*2+1;
 });
+window.addEventListener('mousedown',e=>{isDragging=true;lastX=e.clientX;lastY=e.clientY});
+window.addEventListener('mouseup',()=>isDragging=false);
+window.addEventListener('wheel',e=>{targetZoom=Math.max(6,Math.min(20,targetZoom+e.deltaY*0.01))});
+
 window.addEventListener('touchmove',e=>{
-  targetMouseX=(e.touches[0].clientX/window.innerWidth)*2-1;
-  targetMouseY=-(e.touches[0].clientY/window.innerHeight)*2+1;
+  if(e.touches.length===1){
+    camAngle-=(e.touches[0].clientX-lastX)*0.005;
+    targetMY-=(e.touches[0].clientY-lastY)*0.03;
+    lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;
+  }
 },{passive:true});
+window.addEventListener('touchstart',e=>{if(e.touches.length===1){lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;isDragging=true}});
+window.addEventListener('touchend',()=>isDragging=false);
 
 window.addEventListener('resize',()=>{
-  camera.aspect=window.innerWidth/window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth,window.innerHeight);
+  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
 });
 
-// ANIMATION LOOP
+// ═══════════════════ ANIMATION LOOP ═══════════════════
 const clock=new THREE.Clock();
 function animate(){
   requestAnimationFrame(animate);
   const t=clock.getElapsedTime();
 
-  // Smooth mouse
-  mouseX+=(targetMouseX-mouseX)*0.05;
-  mouseY+=(targetMouseY-mouseY)*0.05;
+  // Smooth interpolation
+  mouseX+=(targetMX-mouseX)*0.03;
+  mouseY+=(targetMY-mouseY)*0.03;
+  zoom+=(targetZoom-zoom)*0.08;
 
-  // Camera orbit
-  const camRadius=7;
-  const camAngle=t*0.15+mouseX*0.5;
-  camera.position.x=Math.cos(camAngle)*camRadius;
-  camera.position.z=Math.sin(camAngle)*camRadius;
-  camera.position.y=2+mouseY*1.5;
-  camera.lookAt(0,0,0);
+  // Camera
+  const cx=Math.cos(camAngle)*zoom;
+  const cz=Math.sin(camAngle)*zoom;
+  const cy=5+mouseY*3;
+  camera.position.lerp(new THREE.Vector3(cx,cy,cz),0.05);
+  camera.lookAt(0,1,0);
 
-  // Coin rotation
-  coinGroup.rotation.y=t*0.8;
-  coinGroup.rotation.x=Math.sin(t*0.3)*0.1;
-  coin.position.y=Math.sin(t*1.5)*0.15;
-
-  // Orbit particles
-  orbitParticles.forEach(p=>{
-    p.userData.angle+=p.userData.speed*0.02;
-    const a=p.userData.angle;
-    const r=p.userData.radius;
-    p.position.x=Math.cos(a)*r;
-    p.position.z=Math.sin(a)*r;
-    p.position.y=Math.sin(t*2+a)*0.15+p.userData.yOffset;
+  // Ore deposits pulse
+  oreDeposits.forEach((ore,i)=>{
+    const s=1+Math.sin(t*2+i)*0.15;
+    ore.userData.gem.scale.setScalar(s);
+    ore.userData.glow.scale.setScalar(s*1.3);
+    ore.userData.glow.material.opacity=0.15+Math.sin(t*3+i)*0.1;
   });
 
-  // Floor shader time
-  floorMat.uniforms.time.value=t;
+  // Agent animations
+  agentChars.forEach((char,i)=>{
+    const b=char.userData.body;
+    const h=char.userData.head;
+    const ht=char.userData.hat;
+    const tool=char.userData.toolGroup;
+    const o=char.userData.animOffset;
 
-  // Laser rings
-  rings.forEach((r,i)=>{
-    r.scale.setScalar(1+Math.sin(t*0.8+i)*0.08);
-    r.material.opacity=0.25+Math.sin(t*0.6+i)*0.08;
+    // Bobbing
+    const bob=Math.sin(t*1.5+o)*0.08;
+    char.position.y=char.userData.baseY+bob;
+
+    // Tool animation per agent type
+    if(char.userData.toolType==='pickaxe'||char.userData.toolType==='heavypick'){
+      tool.rotation.z=Math.sin(t*3+o)*0.5-0.3;
+    }else if(char.userData.toolType==='magnifier'){
+      tool.rotation.z=Math.sin(t*1.5+o)*0.3;
+      tool.position.y=Math.sin(t*2+o)*0.1;
+    }
+    // Headlamp flicker
+    char.userData.lampGlow.intensity=2.5+Math.sin(t*5+o)*0.8;
   });
 
-  // BG particles drift
-  const pos=bgParticles.geometry.attributes.position.array;
-  for(let i=0;i<bgCount;i++){
-    pos[i*3+1]+=Math.sin(t+pos[i*3])*0.003;
-    if(pos[i*3+1]>5)pos[i*3+1]=-5;
-    if(pos[i*3+1]<-5)pos[i*3+1]=5;
+  // Cart sway
+  cartGroup.position.x=Math.sin(t*0.5)*0.3;
+  cartGroup.rotation.z=Math.sin(t*0.7)*0.05;
+
+  // Dust particles
+  const pos=dust.geometry.attributes.position.array;
+  for(let i=0;i<dustCount;i++){
+    pos[i*3+1]+=0.003+Math.sin(t+pos[i*3])*0.002;
+    pos[i*3]+=Math.cos(t*0.3+pos[i*3+2])*0.002;
+    if(pos[i*3+1]>5)pos[i*3+1]=0;
   }
-  bgParticles.geometry.attributes.position.needsUpdate=true;
-  bgParticles.rotation.y+=0.0005;
+  dust.geometry.attributes.position.needsUpdate=true;
 
-  // Point light pulse
-  pointLight.intensity=18+Math.sin(t*2)*3;
+  // Lantern flicker
+  lanterns.forEach((l,i)=>{
+    l.intensity=7+Math.sin(t*4+i*1.7)*1.5;
+  });
+
+  // Update time display
+  if(Math.floor(t)%5===0&&Math.floor(t)!==window._lastUpdate){
+    window._lastUpdate=Math.floor(t);
+    const now=new Date();
+    document.querySelectorAll('.log-entry .time')[0].textContent=now.toTimeString().slice(0,5);
+    // Simulate scanner finding ore
+    const logEntries=document.querySelectorAll('.log-entry');
+    if(logEntries.length>0){
+      const r=Math.random();
+      if(r<0.3){
+        const names=['BONK','WIF','POPCAT','MYRO','SAMO','BOME','SLERF','WEN'];
+        const n=names[Math.floor(Math.random()*names.length)];
+        const last=logEntries[logEntries.length-1];
+        // Add scan result to log
+      }
+    }
+  }
 
   renderer.render(scene,camera);
-
-  // Update HUD clock
-  const now=new Date();
-  const ts=now.toTimeString().slice(0,8);
-  document.getElementById('solPrice').textContent='$'+(80.72+Math.sin(t*0.3)*0.5).toFixed(2);
 }
-
 animate();
 
-// Load complete
-setTimeout(()=>document.getElementById('loading').classList.add('hidden'),1000);
+// ═══════════════════ UI FUNCTIONS ═══════════════════
+window.showDetail=function(id){
+  const info={
+    prospector:{name:'PROSPECTOR',role:'Scanner Agent — Ore Detection',stats:[
+      {l:'Status',v:'🟢 ACTIVE — Scanning pump.fun every 5s'},
+      {l:'Specialty',v:'New token discovery + scam pre-filter'},
+      {l:'Equipment',v:'DexScreener Boosts Scanner, Pump.fun API'},
+      {l:'Output',v:'JSON candidates → GEOLOGIST'},
+      {l:'Scan Range',v:'Last 30 tokens, NSFW filtered'},
+      {l:'Scam Detection',v:'AI trap keywords, duplicates, URLs'},
+      {l:'Current Task',v:'Monitoring Layer 1 (Surface) for new veins'},
+      {l:'Efficiency',v:'95%'},
+    ]},
+    geologist:{name:'GEOLOGIST',role:'Analyst Agent — Quality Assurance',stats:[
+      {l:'Status',v:'🟡 READY — Awaiting ore samples'},
+      {l:'Specialty',v:'Quality scoring + scam deep-analysis'},
+      {l:'Equipment',v:'Scoring engine, MCap filters, age filters'},
+      {l:'Decision Logic',v:'Score≥30, MCap $3K-$80K, Age&lt;10min'},
+      {l:'Confidence',v:'score + 30% (max 95%)'},
+      {l:'Filter Rules',v:'SCAM, Low Score, MCap, Age, Position limit'},
+      {l:'Current Task',v:'Analyzing ore purity — 0 candidates queued'},
+      {l:'Efficiency',v:'78%'},
+    ]},
+    miner:{name:'EXCAVATOR',role:'Executor Agent — Real Mining TX',stats:[
+      {l:'Status',v:'🟡 STANDBY — Need SOL for TX fees'},
+      {l:'Specialty',v:'Jupiter swap execution on Solana mainnet'},
+      {l:'Equipment',v:'Jupiter API v1, Solana CLI signer'},
+      {l:'TX Config',v:'Slippage 10%, Auto-priority fee 2x'},
+      {l:'Position',v:'0 active / Max 2'},
+      {l:'Balance',v:'0.1354 SOL (~$10.93)'},
+      {l:'Current Task',v:'Sharpening pickaxe — ready to strike'},
+      {l:'Efficiency',v:'45%'},
+    ]},
+    foreman:{name:'FOREMAN',role:'Monitor Agent — Operations Control',stats:[
+      {l:'Status',v:'🟢 ACTIVE — Overseeing all operations'},
+      {l:'Specialty',v:'Position tracking, TP/SL management'},
+      {l:'TP Targets',v:'150%, 250% profit'},
+      {l:'Stop Loss',v:'-15% trailing'},
+      {l:'Max Positions',v:'2'},
+      {l:'Cooldown',v:'180s between trades'},
+      {l:'Current Task',v:'Monitoring colony KPIs — all clear'},
+      {l:'Efficiency',v:'90%'},
+    ]},
+  };
+  const d=info[id];
+  document.getElementById('detailName').textContent=d.name;
+  document.getElementById('detailRole').textContent=d.role;
+  document.getElementById('detailStats').innerHTML=d.stats.map(s=>
+    `<div class="stat"><span style="color:rgba(232,200,120,0.7)">${s.l}</span><span style="color:#ffb432">${s.v}</span></div>`
+  ).join('');
+  document.getElementById('detailPanel').style.display='block';
+};
+
+window.hideDetail=function(){
+  document.getElementById('detailPanel').style.display='none';
+};
+
+window.toggleHUD=function(){
+  const hud=document.getElementById('hud');
+  hud.style.display=hud.style.display==='none'?'block':'none';
+};
 </script>
 </body>
 </html>
