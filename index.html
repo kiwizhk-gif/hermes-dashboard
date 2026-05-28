@@ -5,217 +5,330 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0a0a0a">
-<title>HERMES TRADING DASHBOARD</title>
+<meta name="theme-color" content="#000000">
+<title>🎮 HERMES 3D TRADING TERMINAL</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-* { margin:0; padding:0; box-sizing:border-box; }
-:root {
-  --green: #00ff00;
-  --dark-green: #00aa00;
-  --bg: #0a0a0a;
-  --panel-bg: #001a00;
-  --border-glow: rgba(0,255,0,0.3);
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;overflow:hidden;font-family:'Courier New',monospace;touch-action:none}
+canvas{display:block}
+#hud{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:10}
+.hud-panel{
+  position:absolute;
+  background:rgba(0,10,0,0.85);
+  border:1px solid rgba(0,255,0,0.4);
+  border-radius:4px;
+  padding:10px 14px;
+  color:#0f0;
+  font-size:11px;
+  backdrop-filter:blur(4px);
+  box-shadow:0 0 20px rgba(0,255,0,0.15),inset 0 0 20px rgba(0,255,0,0.05);
+  pointer-events:auto;
 }
-body {
-  background: #0a0a0a;
-  color: var(--green);
-  font-family: 'Press Start 2P', monospace;
-  font-size: 8px;
-  line-height: 1.7;
-  padding: 10px;
-  image-rendering: pixelated;
-  -webkit-tap-highlight-color: transparent;
-  overscroll-behavior: none;
-}
-.container { max-width: 1000px; margin: 0 auto; }
-.header {
-  text-align: center;
-  border: 3px solid var(--green);
-  padding: 10px 8px;
-  margin-bottom: 12px;
-  background: #001100;
-  box-shadow: 0 0 15px var(--border-glow), inset 0 0 15px rgba(0,255,0,0.1);
-  border-radius: 4px;
-}
-.header h1 { font-size: 11px; color: var(--green); text-shadow: 0 0 8px var(--green), 0 0 16px var(--dark-green); margin-bottom: 6px; line-height: 1.4; }
-.header .subtitle { font-size: 6px; color: var(--dark-green); }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
-.panel {
-  border: 2px solid var(--green);
-  background: var(--panel-bg);
-  padding: 10px;
-  box-shadow: 0 0 8px var(--border-glow);
-  border-radius: 4px;
-}
-.panel h2 {
-  font-size: 9px;
-  color: #ffcc00;
-  border-bottom: 2px solid #ffcc00;
-  padding-bottom: 4px;
-  margin-bottom: 8px;
-  text-shadow: 0 0 4px #ffcc00;
-}
-.stat { display: flex; justify-content: space-between; margin: 3px 0; flex-wrap: wrap; gap: 2px; }
-.stat .label { color: var(--dark-green); }
-.stat .value { color: var(--green); text-align: right; }
-.value.gold { color: #ffcc00; }
-.value.red { color: #ff4444; }
-.value.green { color: var(--green); }
+.hud-panel .title{color:#ff0;font-size:10px;font-weight:bold;margin-bottom:6px;letter-spacing:2px;text-shadow:0 0 10px rgba(255,255,0,0.5)}
+.hud-panel .val{color:#0f0;font-size:16px;font-weight:bold;text-shadow:0 0 8px rgba(0,255,0,0.6)}
+.hud-panel .val.gold{color:#ff0;font-size:20px}
+.hud-panel .row{display:flex;justify-content:space-between;margin:2px 0;gap:12px}
+.hud-panel .label{color:rgba(0,255,0,0.6);font-size:8px}
+.hud-panel .data{color:#0f0;font-size:10px;text-align:right}
+#balance-panel{top:15px;left:15px}
+#status-panel{top:15px;right:15px;text-align:right}
+#agents-panel{bottom:15px;left:15px;min-width:180px}
+#positions-panel{bottom:15px;right:15px}
+#center-title{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+#center-title .main{font-size:14px;color:#0f0;text-shadow:0 0 20px #0f0,0 0 40px #0a0;letter-spacing:4px}
+#center-title .sub{font-size:8px;color:rgba(0,255,0,0.5);margin-top:4px}
+.agent-dot{display:flex;align-items:center;gap:6px;margin:3px 0;font-size:8px}
+.agent-dot .dot{width:6px;height:6px;border-radius:50%}
+.agent-dot .dot.on{background:#0f0;box-shadow:0 0 6px #0f0}
+.agent-dot .dot.standby{background:#ff0;box-shadow:0 0 6px #ff0}
+.blink{animation:blink 1.2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
 
-.agent-card {
-  border: 2px solid var(--dark-green);
-  background: #001500;
-  padding: 6px;
-  margin: 4px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-radius: 2px;
-}
-.agent-icon { font-size: 16px; min-width: 20px; text-align: center; }
-.agent-info { flex: 1; min-width: 0; }
-.agent-name { color: #ffcc00; font-size: 7px; }
-.agent-status { font-size: 6px; }
-.agent-status.active { color: var(--green); }
-.agent-status.ready { color: #ffcc00; }
+#loading{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#0f0;font-size:12px;z-index:100;letter-spacing:3px}
+#loading.hidden{display:none}
 
-.trade-row {
-  display: flex; justify-content: space-between;
-  padding: 2px 0; border-bottom: 1px dashed #002200;
-  font-size: 6px; flex-wrap: wrap; gap: 3px;
-}
-.trade-buy { color: var(--green); }
-.trade-sell { color: #ff4444; }
-
-/* Blink animation */
-@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
-.blink { animation: blink 1.2s infinite; }
-
-/* CRT scanlines */
-@keyframes scanline { 0% { background-position: 0 0; } 100% { background-position: 0 30px; } }
-.scanlines::after {
-  content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: repeating-linear-gradient(0deg, rgba(0,255,0,0.02) 0px, transparent 2px);
-  pointer-events: none; z-index: 999;
-}
-
-.footer { text-align: center; margin-top: 10px; color: #002200; font-size: 6px; }
-
-/* MOBILE TWEAKS */
-@media (max-width: 600px) {
-  body { padding: 6px; font-size: 7px; }
-  .header { padding: 8px 6px; margin-bottom: 8px; }
-  .header h1 { font-size: 9px; word-break: break-all; }
-  .grid { grid-template-columns: 1fr; gap: 6px; }
-  .panel { padding: 8px; }
-  .panel h2 { font-size: 8px; }
-  .agent-icon { font-size: 14px; min-width: 16px; }
-  .stat .label, .stat .value { font-size: 6px; word-break: break-all; }
-}
-
-/* Pull-to-refresh indicator */
-.pull-hint {
-  text-align: center;
-  color: #003300;
-  font-size: 5px;
-  padding: 4px;
+@media(max-width:600px){
+  .hud-panel{padding:6px 10px;font-size:9px}
+  .hud-panel .val{font-size:13px}
+  .hud-panel .val.gold{font-size:16px}
+  #center-title .main{font-size:10px}
 }
 </style>
 </head>
-<body class="scanlines">
-<div class="container">
+<body>
+<div id="loading">INITIALIZING...</div>
 
-<div class="header">
-  <h1>HERMES AUTO-TRADER v1.0</h1>
-  <div class="subtitle blink" id="statusLine">⬇ READY ⬇</div>
-</div>
-
-<div class="grid">
-
-<div class="panel">
-  <h2>SYSTEM STATUS</h2>
-  <div class="stat"><span class="label">Balance:</span><span class="value gold" id="balance">0.1354 SOL</span></div>
-  <div class="stat"><span class="label">Positions:</span><span class="value" id="positions">0</span></div>
-  <div class="stat"><span class="label">Total Trades:</span><span class="value" id="totalTrades">0</span></div>
-  <div class="stat"><span class="label">P&amp;L:</span><span class="value green" id="pnl">+0.000000 SOL</span></div>
-  <div class="stat"><span class="label">Updated:</span><span class="value" id="updated">--</span></div>
-</div>
-
-<div class="panel">
-  <h2>AGENTS</h2>
-  <div class="agent-card">
-    <div class="agent-icon">🔍</div>
-    <div class="agent-info">
-      <div class="agent-name">SCANNER</div>
-      <div class="agent-status active">🟢 ACTIVE</div>
-      <div style="font-size:5px;color:#005500;">Scans pump.fun (5s intervals)</div>
-    </div>
+<div id="hud">
+  <div class="hud-panel" id="balance-panel">
+    <div class="title">💰 BALANCE</div>
+    <div class="val gold" id="bal">0.1354 SOL</div>
+    <div class="row"><span class="label">USD</span><span class="data">~$10.93</span></div>
+    <div class="row"><span class="label">POSITIONS</span><span class="data">0</span></div>
   </div>
-  <div class="agent-card">
-    <div class="agent-icon">🧠</div>
-    <div class="agent-info">
-      <div class="agent-name">ANALYST</div>
-      <div class="agent-status ready">🟡 READY</div>
-      <div style="font-size:5px;color:#005500;">AI scam detection + scoring</div>
-    </div>
+
+  <div class="hud-panel" id="status-panel">
+    <div class="title">📊 MARKET</div>
+    <div class="row"><span class="label">SOL/USD</span><span class="data" id="solPrice">$80.72</span></div>
+    <div class="row"><span class="label">24H</span><span class="data" style="color:#f44" id="sol24h">-3.5%</span></div>
+    <div class="row"><span class="label">P&L</span><span class="data" style="color:#0f0">+0.00 SOL</span></div>
+    <div class="row"><span class="label">TRADES</span><span class="data">0</span></div>
   </div>
-  <div class="agent-card">
-    <div class="agent-icon">⚔️</div>
-    <div class="agent-info">
-      <div class="agent-name">EXECUTOR</div>
-      <div class="agent-status ready">🟡 READY</div>
-      <div style="font-size:5px;color:#005500;">Jupiter swaps (real TX)</div>
-    </div>
+
+  <div class="hud-panel" id="agents-panel">
+    <div class="title">🤖 AGENTS</div>
+    <div class="agent-dot"><span class="dot on"></span> SCANNER <span style="color:#0f0;margin-left:auto">ACTIVE</span></div>
+    <div class="agent-dot"><span class="dot standby"></span> ANALYST <span style="color:#ff0;margin-left:auto">READY</span></div>
+    <div class="agent-dot"><span class="dot standby"></span> EXECUTOR <span style="color:#ff0;margin-left:auto">READY</span></div>
+    <div class="agent-dot"><span class="dot on"></span> MONITOR <span style="color:#0f0;margin-left:auto">ACTIVE</span></div>
   </div>
-  <div class="agent-card">
-    <div class="agent-icon">📊</div>
-    <div class="agent-info">
-      <div class="agent-name">MONITOR</div>
-      <div class="agent-status active">🟢 ACTIVE</div>
-      <div style="font-size:5px;color:#005500;">TP/SL management</div>
-    </div>
+
+  <div class="hud-panel" id="positions-panel">
+    <div class="title">📈 POSITIONS</div>
+    <div style="color:rgba(0,255,0,0.3);font-size:9px;text-align:center">NO ACTIVE<br>POSITIONS</div>
   </div>
 </div>
 
-<div class="panel">
-  <h2>ACTIVE POSITIONS</h2>
-  <div style="color:#005500;text-align:center;padding:8px;font-size:7px;">No active positions</div>
-</div>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}
+</script>
 
-<div class="panel">
-  <h2>RECENT TRADES</h2>
-  <div style="color:#005500;text-align:center;padding:8px;font-size:7px;">No trades yet</div>
-</div>
+<script type="module">
+import * as THREE from 'three';
 
-</div>
+// Hide loading
+setTimeout(()=>document.getElementById('loading').classList.add('hidden'),800);
 
-<div class="panel" style="margin-top:10px;text-align:center;">
-  <h2 style="display:inline;">HIGH SCORES</h2>
-  <div style="margin-top:8px;font-size:7px;">
-    <span style="color:#ffcc00;">Best: -- </span> &nbsp;
-    <span style="color:#ff4444;">Worst: -- </span> &nbsp;
-    <span style="color:var(--green);">Win Rate: --%</span>
-  </div>
-</div>
+// SCENE
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x000000,0.00008);
 
-<div class="footer" id="footer">
-  HERMES AUTO-TRADER v1.0 | <span id="timestamp"></span> | ALL SYSTEMS NOMINAL
-</div>
-<div class="pull-hint">↻ Pull down to refresh | Auto-refresh: 30s</div>
+const camera = new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,100);
+camera.position.set(0,2.5,8);
+camera.lookAt(0,0,0);
 
-</div>
-<script>
-function updateTime() {
-  const now = new Date();
-  document.getElementById('timestamp').textContent = now.toISOString().replace('T',' ').slice(0,19);
-  document.getElementById('updated').textContent = now.toTimeString().slice(0,8);
+const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.shadowMap.enabled=true;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.2;
+document.body.appendChild(renderer.domElement);
+
+// LIGHTS
+const ambient = new THREE.AmbientLight(0x002200,1.5);
+scene.add(ambient);
+const dirLight = new THREE.DirectionalLight(0x00ff00,3);
+dirLight.position.set(5,10,5);
+dirLight.castShadow=true;
+scene.add(dirLight);
+const pointLight = new THREE.PointLight(0x00ff00,20,15);
+pointLight.position.set(0,2,0);
+scene.add(pointLight);
+
+// GRID FLOOR
+const gridHelper = new THREE.PolarGridHelper(8,32,24,128,0x003300,0x001100);
+scene.add(gridHelper);
+
+// NEON GRID LINES
+const floorGeo = new THREE.PlaneGeometry(16,16);
+const floorMat = new THREE.ShaderMaterial({
+  uniforms:{time:{value:0}},
+  vertexShader:`
+    varying vec2 vUv;
+    void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}
+  `,
+  fragmentShader:`
+    varying vec2 vUv;
+    uniform float time;
+    void main(){
+      vec2 p=vUv*16.0;
+      float gx=smoothstep(0.02,0.0,abs(fract(p.x)-0.5))*0.3;
+      float gy=smoothstep(0.02,0.0,abs(fract(p.y)-0.5))*0.3;
+      float g=max(gx,gy);
+      float d=length(vUv-0.5)*2.0;
+      g*=1.0-d*0.7;
+      gl_FragColor=vec4(0.0,g*0.5,0.0,g*0.15);
+    }
+  `,
+  transparent:true,depthWrite:false
+});
+const floor = new THREE.Mesh(floorGeo,floorMat);
+floor.rotation.x=-Math.PI/2;
+floor.position.y=-2.5;
+scene.add(floor);
+
+// 3D SOLANA COIN
+const coinGroup = new THREE.Group();
+scene.add(coinGroup);
+
+// Coin body
+const coinGeo = new THREE.CylinderGeometry(1,1,0.15,64);
+const coinMat = new THREE.MeshStandardMaterial({
+  color:0x9945FF,
+  metalness:0.9,
+  roughness:0.15,
+  emissive:0x220044,
+  emissiveIntensity:0.4
+});
+const coin = new THREE.Mesh(coinGeo,coinMat);
+coin.castShadow=true;
+coinGroup.add(coin);
+
+// Coin edge ring
+const ringGeo = new THREE.TorusGeometry(1,0.04,16,64);
+const ringMat = new THREE.MeshStandardMaterial({color:0x14F195,metalness:1,roughness:0.1,emissive:0x14F195,emissiveIntensity:1.5});
+const ring = new THREE.Mesh(ringGeo,ringMat);
+coinGroup.add(ring);
+
+// SOL text plane
+const solTexCanvas = document.createElement('canvas');
+solTexCanvas.width=256;solTexCanvas.height=256;
+const ctx=solTexCanvas.getContext('2d');
+ctx.fillStyle='#14F195';
+ctx.font='bold 100px "Press Start 2P", monospace';
+ctx.textAlign='center';
+ctx.fillText('SOL',128,140);
+const solTex=new THREE.CanvasTexture(solTexCanvas);
+const solPlaneGeo=new THREE.PlaneGeometry(1.6,1.6);
+const solPlaneMat=new THREE.MeshStandardMaterial({map:solTex,transparent:true,emissive:0x14F195,emissiveIntensity:0.8,metalness:0.5,roughness:0.3});
+const solPlane=new THREE.Mesh(solPlaneGeo,solPlaneMat);
+solPlane.position.y=0.08;
+coinGroup.add(solPlane);
+const solPlane2=solPlane.clone();
+solPlane2.position.y=-0.08;
+solPlane2.rotation.y=Math.PI;
+coinGroup.add(solPlane2);
+
+// ORBITING PARTICLES around coin
+const orbitParticles=[];
+for(let i=0;i<24;i++){
+  const pGeo=new THREE.SphereGeometry(0.03,8,8);
+  const pMat=new THREE.MeshStandardMaterial({color:0x14F195,emissive:0x14F195,emissiveIntensity:2});
+  const p=new THREE.Mesh(pGeo,pMat);
+  p.userData={angle:(i/24)*Math.PI*2,radius:1.3+Math.random()*0.5,speed:0.5+Math.random()*1.5,yOffset:Math.random()*0.3};
+  coinGroup.add(p);
+  orbitParticles.push(p);
 }
-updateTime();
-setInterval(updateTime, 1000);
 
-// Auto-refresh every 30 seconds
-setTimeout(function(){ location.reload(); }, 30000);
+// BACKGROUND PARTICLES
+const bgParticlesGeo=new THREE.BufferGeometry();
+const bgCount=600;
+const bgPositions=new Float32Array(bgCount*3);
+for(let i=0;i<bgCount;i++){
+  bgPositions[i*3]=(Math.random()-0.5)*16;
+  bgPositions[i*3+1]=(Math.random()-0.5)*10;
+  bgPositions[i*3+2]=(Math.random()-0.5)*12;
+}
+bgParticlesGeo.setAttribute('position',new THREE.BufferAttribute(bgPositions,3));
+const bgParticlesMat=new THREE.PointsMaterial({color:0x00ff00,size:0.03,transparent:true,opacity:0.6,blending:THREE.AdditiveBlending});
+const bgParticles=new THREE.Points(bgParticlesGeo,bgParticlesMat);
+scene.add(bgParticles);
+
+// LASER RINGS
+const rings=[];
+for(let i=0;i<3;i++){
+  const rGeo=new THREE.TorusGeometry(2+i*1.2,0.01,8,100);
+  const rMat=new THREE.MeshBasicMaterial({color:0x00ff00,transparent:true,opacity:0.3-i*0.08});
+  const r=new THREE.Mesh(rGeo,rMat);
+  r.rotation.x=Math.PI/2;
+  r.position.y=-2+i*0.2;
+  rings.push(r);
+  scene.add(r);
+}
+
+// HOLOGRAM BEAMS (vertical light columns)
+for(let i=0;i<4;i++){
+  const beamGeo=new THREE.CylinderGeometry(0.02,0.02,5,8);
+  const beamMat=new THREE.MeshBasicMaterial({color:0x00ff00,transparent:true,opacity:0.15,blending:THREE.AdditiveBlending});
+  const beam=new THREE.Mesh(beamGeo,beamMat);
+  beam.position.set((Math.random()-0.5)*6,-0.5,(Math.random()-0.5)*6);
+  scene.add(beam);
+}
+
+// MOUSE/TOUCH
+let mouseX=0,mouseY=0,targetMouseX=0,targetMouseY=0;
+window.addEventListener('mousemove',e=>{
+  targetMouseX=(e.clientX/window.innerWidth)*2-1;
+  targetMouseY=-(e.clientY/window.innerHeight)*2+1;
+});
+window.addEventListener('touchmove',e=>{
+  targetMouseX=(e.touches[0].clientX/window.innerWidth)*2-1;
+  targetMouseY=-(e.touches[0].clientY/window.innerHeight)*2+1;
+},{passive:true});
+
+window.addEventListener('resize',()=>{
+  camera.aspect=window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth,window.innerHeight);
+});
+
+// ANIMATION LOOP
+const clock=new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const t=clock.getElapsedTime();
+
+  // Smooth mouse
+  mouseX+=(targetMouseX-mouseX)*0.05;
+  mouseY+=(targetMouseY-mouseY)*0.05;
+
+  // Camera orbit
+  const camRadius=7;
+  const camAngle=t*0.15+mouseX*0.5;
+  camera.position.x=Math.cos(camAngle)*camRadius;
+  camera.position.z=Math.sin(camAngle)*camRadius;
+  camera.position.y=2+mouseY*1.5;
+  camera.lookAt(0,0,0);
+
+  // Coin rotation
+  coinGroup.rotation.y=t*0.8;
+  coinGroup.rotation.x=Math.sin(t*0.3)*0.1;
+  coin.position.y=Math.sin(t*1.5)*0.15;
+
+  // Orbit particles
+  orbitParticles.forEach(p=>{
+    p.userData.angle+=p.userData.speed*0.02;
+    const a=p.userData.angle;
+    const r=p.userData.radius;
+    p.position.x=Math.cos(a)*r;
+    p.position.z=Math.sin(a)*r;
+    p.position.y=Math.sin(t*2+a)*0.15+p.userData.yOffset;
+  });
+
+  // Floor shader time
+  floorMat.uniforms.time.value=t;
+
+  // Laser rings
+  rings.forEach((r,i)=>{
+    r.scale.setScalar(1+Math.sin(t*0.8+i)*0.08);
+    r.material.opacity=0.25+Math.sin(t*0.6+i)*0.08;
+  });
+
+  // BG particles drift
+  const pos=bgParticles.geometry.attributes.position.array;
+  for(let i=0;i<bgCount;i++){
+    pos[i*3+1]+=Math.sin(t+pos[i*3])*0.003;
+    if(pos[i*3+1]>5)pos[i*3+1]=-5;
+    if(pos[i*3+1]<-5)pos[i*3+1]=5;
+  }
+  bgParticles.geometry.attributes.position.needsUpdate=true;
+  bgParticles.rotation.y+=0.0005;
+
+  // Point light pulse
+  pointLight.intensity=18+Math.sin(t*2)*3;
+
+  renderer.render(scene,camera);
+
+  // Update HUD clock
+  const now=new Date();
+  const ts=now.toTimeString().slice(0,8);
+  document.getElementById('solPrice').textContent='$'+(80.72+Math.sin(t*0.3)*0.5).toFixed(2);
+}
+
+animate();
+
+// Load complete
+setTimeout(()=>document.getElementById('loading').classList.add('hidden'),1000);
 </script>
 </body>
 </html>
